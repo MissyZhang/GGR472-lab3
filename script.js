@@ -32,7 +32,7 @@ map.on('load', () => {
     
     map.addSource('nei-population', {
         type: 'geojson',
-        data: 'https:///MissyZhang.github.io/GGR472-lab3/main/data/neighbourhood-crime-rates.geojson' 
+        data: 'https:///MissyZhang.github.io/GGR472-lab3/data/neighbourhood-crime-rates.geojson' 
     });
 
     //Add layer to the map
