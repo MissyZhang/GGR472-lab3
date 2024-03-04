@@ -5,14 +5,13 @@ mapboxgl.accessToken = 'pk.eyJ1IjoibWlzc3l6MjEiLCJhIjoiY2xyNW84dXNlMDh3cDJrcGIwM
 const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/light-v11',
-    center: [-79.43, 43.68], // Initial center coordinates [longitude, latitude]
+    center: [-79.43, 43.68], // Initial center coordinates
     zoom: 10, // Initial zoom level
     minZoom: 9,
     maxZoom: 15
 });
 
 //Add search control to map overlay
-//Requires plugin as source in HTML body
 const geocoder = new MapboxGeocoder({
     accessToken: mapboxgl.accessToken,
     mapboxgl: mapboxgl,
@@ -30,29 +29,34 @@ map.addControl(new mapboxgl.FullscreenControl());
 //Add data source and draw initial visiualization of layer
 map.on('load', () => {
 
-    //Use GeoJSON file as vector tile creates non-unique IDs for features which causes difficulty when highlighting polygons
+    
     map.addSource('nei-population', {
         type: 'geojson',
-        data: 'https://raw.githubusercontent.com/MissyZhang/GGR472-lab3/main/data/neighbourhood-crime-rates.geojson' //Link to raw github files when in development stage. Update to pages on deployment
-    
+        data: 'https:///MissyZhang.github.io/GGR472-lab3/main/data/neighbourhood-crime-rates.geojson' 
     });
 
-    //Add layer only once using case expression and feature state for opacity
+    //Add layer to the map
     map.addLayer({
         'id': 'population-fill',
         'type': 'fill',
         'source': 'nei-population',
         'paint':  {
+            // Define fill color based on population
             'fill-color': [
-                'step', // STEP expression produces stepped results based on value pairs
-                ['get', 'POPULATION_2023'], // GET expression retrieves property value from 'capacity' data field
+                'step', 
+                ['get', 'POPULATION_2023'], 
                 '#fafa6e', // Colour assigned to any values < first step
                 13000, '#68c981', // Colours assigned to values >= each step
                 19000, '#239f8a',
                 25000, '#1a737c',
                 30000, '#2a4858'
             ],
-            'fill-opacity': 0.8,
+            // Define opacity based on zoom level
+            'fill-opacity': [
+                'interpolate', ['linear'], ['zoom'],
+                9, 0.9, // For zoom level 9, opacity is 0.9
+                15, 0.4 // For zoom level 15, opacity is 0.4
+            ],
             'fill-outline-color': 'white'
         }
     });
@@ -60,7 +64,7 @@ map.on('load', () => {
 });
 
 /*--------------------------------------------------------------------
-CREATE LEGEND IN JAVASCRIPT
+CREATE LEGEND
 --------------------------------------------------------------------*/
 //Declare array variables for labels and colours
 const legendlabels = [
@@ -86,14 +90,14 @@ const legend = document.getElementById('legend');
 legendlabels.forEach((label, i) => {
     const colour = legendcolours[i];
 
-    const item = document.createElement('div'); //each layer gets a 'row' - this isn't in the legend yet, we do this later
-    const key = document.createElement('span'); //add a 'key' to the row. A key will be the colour circle
+    const item = document.createElement('div'); 
+    const key = document.createElement('span'); 
 
-    key.className = 'legend-key'; //the key will take on the shape and style properties defined in css
-    key.style.backgroundColor = colour; // the background color is retreived from teh layers array
+    key.className = 'legend-key'; 
+    key.style.backgroundColor = colour; 
 
-    const value = document.createElement('span'); //add a value variable to the 'row' in the legend
-    value.innerHTML = `${label}`; //give the value variable text based on the label
+    const value = document.createElement('span'); 
+    value.innerHTML = `${label}`; 
 
     item.appendChild(key); //add the key (colour cirlce) to the legend row
     item.appendChild(value); //add the value to the legend row
@@ -103,13 +107,13 @@ legendlabels.forEach((label, i) => {
 
 
 /*--------------------------------------------------------------------
-ADD INTERACTIVITY BASED ON HTML EVENT
+ADD INTERACTIVITY
 --------------------------------------------------------------------*/
 
 // 1) Add event listener which returns map view to full screen on button click using flyTo method
 document.getElementById('returnbutton').addEventListener('click', () => {
     map.flyTo({
-        center: [-79.43, 43.68],
+        center: [-79.43, 43.68], // Coordinates of the center
         zoom: 10,
         essential: true
     });
@@ -118,11 +122,11 @@ document.getElementById('returnbutton').addEventListener('click', () => {
 
 // 2) Change display of legend based on check box
 let legendcheck = document.getElementById('legendcheck');
-
+// Add event listener to the checkbox
 legendcheck.addEventListener('click', () => {
     if (legendcheck.checked) {
         legendcheck.checked = true;
-        legend.style.display = 'block';
+        legend.style.display = 'block'; // Display the legend
     }
     else {
         legend.style.display = "none";
@@ -130,31 +134,26 @@ legendcheck.addEventListener('click', () => {
     }
 });
 
-/*--------------------------------------------------------------------
-SIMPLE CLICK EVENT
---------------------------------------------------------------------*/
+// 3) Add event listener to the map for click events on the 'population-fill' layer
+// 3.1) Return the name of the area in the console
 map.on('click', 'population-fill', (e) => {
 
-    console.log(e);   //e is the event info triggered and is passed to the function as a parameter (e)
-    //Explore console output using Google DevTools
-
-    let neiname = e.features[0].properties.AREA_NAME;
-    console.log(neiname);
+    console.log(e);   
+    let neiname = e.features[0].properties.AREA_NAME; // Extract the name of the area from the clicked feature's properties
+    console.log(neiname); // Log the name of the area to the console
 
 });
 
-/*--------------------------------------------------------------------
-ADD POP-UP ON CLICK EVENT
---------------------------------------------------------------------*/
+// 3.2) Event listener for changing cursor on mouse enter
 map.on('mouseenter', 'population-fill', () => {
-    map.getCanvas().style.cursor = 'pointer'; //Switch cursor to pointer when mouse is over provterr-fill layer
+    map.getCanvas().style.cursor = 'pointer'; //Switch cursor to pointer when mouse is over population-fill layer
 });
-
+// 3.3) Event listener for changing cursor on mouse leave
 map.on('mouseleave', 'population-fill', () => {
-    map.getCanvas().style.cursor = ''; //Switch cursor back when mouse leaves provterr-fill layer
+    map.getCanvas().style.cursor = ''; //Switch cursor back when mouse leaves population-fill layer
 });
 
-
+// 3.4) Event listener for showing popup on click
 map.on('click', 'population-fill', (e) => {
     new mapboxgl.Popup() //Declare new popup object on each click
         .setLngLat(e.lngLat) //Use method to set coordinates of popup based on mouse click location
@@ -164,17 +163,17 @@ map.on('click', 'population-fill', (e) => {
 });
 
 
-// 4) Filter data layer to show selected Province from dropdown selection
+// 4) Filter data layer to show selected population range from dropdown selection
+// Variable to store the selected population value
 let populationValue;
-
+// Event listener for changes in the population dropdown
 document.getElementById("populationFieldset").addEventListener('change',(e) => {   
-    populationValue = document.getElementById('population').value;
+    populationValue = document.getElementById('population').value; // Get the selected population value from the dropdown
 
     console.log(populationValue); // Useful for testing whether correct values are returned from dropdown selection
 
     if (populationValue == 'All') {
-        // Show all polygons
-        map.setFilter('population-fill', null);
+        map.setFilter('population-fill', null); // Show all polygons
     } else {
         // Filter based on population range
         const populationRanges = populationValue.split('-');

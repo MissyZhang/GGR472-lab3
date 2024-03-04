@@ -8,7 +8,7 @@
 .map-search-container {
     position: relative;
     font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
-    background: #96d6b8;
+    background: #96d6b8; /*change the background color for better contrast*/
     top: 0;
     left: 0;
     width: 260px;
@@ -47,7 +47,7 @@
     border-radius: 3px;
     bottom: 0;
     margin-bottom: 30px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /*horizontal shadow, vertical shadow, size of shadow, color*/
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); 
     font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
     padding: 10px;
     right: 10px;
